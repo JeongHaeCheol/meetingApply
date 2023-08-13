@@ -19,4 +19,6 @@ public interface MeetingApplicationRepository extends JpaRepository<MeetingAppli
 
     public List<MeetingApplication> findBySwimClassOrderByIdAsc(SwimClass swimClass);
 
+    public List<MeetingApplication> findByNickname(String nickname);
+
 }

@@ -18,6 +18,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
+
 @Getter
 @Setter
 @ToString
@@ -29,6 +31,41 @@ public class WaitingQueueService {
     private final WaitingQueueRepository waitingQueueRepository;
 
     private final MeetingApplicationRepository meetingApplicationRepository;
+
+
+    @PostConstruct
+    public void init() {
+        if (waitingQueueRepository.countAllBy() == 0) {
+            waitingQueueRepository.save(WaitingQueue.builder()  // WaitingQueue.builder()로 수정
+                    .swimClass(SwimClass.HAIL)
+                    .capacity(10)
+                    .applicationCount(0)
+                    .extraCapacity(0)
+                    .build());
+
+            waitingQueueRepository.save(WaitingQueue.builder()  // WaitingQueue.builder()로 수정
+                    .swimClass(SwimClass.PADO)
+                    .capacity(5)
+                    .applicationCount(0)
+                    .extraCapacity(0)
+                    .build());
+
+            waitingQueueRepository.save(WaitingQueue.builder()  // WaitingQueue.builder()로 수정
+                    .swimClass(SwimClass.JANJAN)
+                    .capacity(5)
+                    .applicationCount(0)
+                    .extraCapacity(0)
+                    .build());
+
+            waitingQueueRepository.save(WaitingQueue.builder()  // WaitingQueue.builder()로 수정
+                    .swimClass(SwimClass.NULNUL)
+                    .capacity(5)
+                    .applicationCount(0)
+                    .extraCapacity(0)
+                    .build());
+
+        }
+    }
 
     // waitingQueue를 활용하지 않는 방식
     // 전체 리스트로 조회

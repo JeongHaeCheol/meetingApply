@@ -17,4 +17,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, Intege
 
     public void delete(Participant entity);
 
+    public Participant findByNickName(String nickName);
+
 }

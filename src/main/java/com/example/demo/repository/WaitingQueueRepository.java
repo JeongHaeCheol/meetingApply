@@ -12,6 +12,8 @@ import com.example.demo.model.WaitingQueue;
 @Repository
 public interface WaitingQueueRepository extends JpaRepository<WaitingQueue, Integer> {
 
+
+    public Long countAllBy();
     public List<WaitingQueue> findAll();
 
     public WaitingQueue findBySwimClass(SwimClass swimClass);

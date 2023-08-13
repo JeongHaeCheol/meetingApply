@@ -1,10 +1,14 @@
 package com.example.demo.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
+import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
+import com.example.demo.controller.dto.ApplyDto;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.enum_model.Role;
@@ -30,14 +34,54 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MeetingApplicationService {
 
-    // 메모리말고 DB에서 처리하자
-    // private List<MeetingApplication> waitingQueue = new ArrayList<>();
+    private List<MeetingApplication> classA;
+    private List<MeetingApplication> classB;
+    private List<MeetingApplication> classC;
+    private List<MeetingApplication> classD;
+
 
     private final MeetingApplicationRepository meetingApplicationRepository;
 
     private final WaitingQueueRepository waitingQueueRepository;
 
     private final ParticipantRepository participantRepository;
+
+
+    @PostConstruct
+    public void init() {
+        classA = meetingApplicationRepository.findBySwimClassOrderByIdAsc(SwimClass.HAIL);
+        classB = meetingApplicationRepository.findBySwimClassOrderByIdAsc(SwimClass.PADO);
+        classC = meetingApplicationRepository.findBySwimClassOrderByIdAsc(SwimClass.JANJAN);
+        classD = meetingApplicationRepository.findBySwimClassOrderByIdAsc(SwimClass.NULNUL);
+    }
+
+
+    public List<MeetingApplication> getMeetingApplicationList(SwimClass swimClass) {
+
+            List<MeetingApplication> result = new ArrayList<>();
+
+            switch (swimClass) {
+                case HAIL:
+                    result = classA;
+                    break;
+                case PADO:
+                    result = classB;
+                    break;
+                case JANJAN:
+                    result = classC;
+                    break;
+                case NULNUL:
+                    result = classD;
+                    break;
+                default:
+                    break;
+            }
+
+            return result;
+    }
+
+
+
 
     public MeetingApplication checkMyMeetingApplication(Integer participantId) {
 
@@ -59,7 +103,29 @@ public class MeetingApplicationService {
         return null;
     }
 
-    public List<MeetingApplication> addWaiting(MeetingApplication meetingApplication) {
+    public List<MeetingApplication> addWaiting(ApplyDto applyDto) {
+
+        Participant participant = participantRepository.findByNickName(applyDto.getParticipantNickName());
+        if(participant == null) {
+            return null;
+        }
+
+//        List<MeetingApplication> isExist = meetingApplicationRepository.findByNickname(applyDto.getParticipantNickName());
+//        if(!isExist.isEmpty()) {
+//        log.info("isExist : {}", meetingApplicationRepository.findByNickname(applyDto.getParticipantNickName()));
+//            return null;
+//        }
+
+        MeetingApplication meetingApplication = MeetingApplication.builder()
+                .approval(false)
+                .mainParticipant(participant)
+                .nickname(participant.getNickName())
+                .swimClass(applyDto.getSwimClass())
+                .isAfterMeeting(applyDto.getIsAfterMeeting())
+                .inquiry(applyDto.getInquiry())
+                .isAttendance(applyDto.getIsAttendance())
+                .isPayment(applyDto.getIsPayment())
+                .build();
 
         setWaitingNumber(meetingApplication);
 
@@ -79,20 +145,29 @@ public class MeetingApplicationService {
 
         SwimClass applicationClass = meetingApplication.getSwimClass();
 
+        List<MeetingApplication> classX = applicationClass == SwimClass.HAIL ? classA : applicationClass == SwimClass.PADO ? classB : applicationClass == SwimClass.JANJAN ? classC : classD;
+        WaitingQueue waitingQueue = allWaitingQueues.stream().filter(wq -> wq.getSwimClass().equals(applicationClass)).findFirst().orElseThrow();
+
         if (Role.USER.equals(participant.getRole()) && meetingApplication.getMainParticipant().getId() != id) {
             return null;
         }
 
-        for (WaitingQueue waitingQueue : allWaitingQueues) {
 
-            if (waitingQueue.getSwimClass().equals(applicationClass)) {
-                Integer waitingNumber = waitingQueue.getAvailableLastNumber();
+        //classApp을 id 오름차순으로 정렬
+        classX.sort(Comparator.comparing(MeetingApplication::getId, Comparator.nullsLast(Integer::compareTo)));
+        //삭제할 meetingApplication의 다음 meetingApplication의 approval을 true로 바꾸고 싶습니다.
 
-                waitingQueue.setApplicationCount(waitingNumber - 1);
-                waitingQueue.setAvailableLastNumber(waitingNumber + 1);
-                meetingApplicationRepository.delete(meetingApplication);
-            }
+        for(int i = 1; i <= classX.size(); i++) {
+               if(classX.get(i).getApproval() == false && waitingQueue.getCapacity() >= i) {
+                   classX.get(i).setApproval(true);
+                     meetingApplicationRepository.save(classX.get(i));
+                   break;
+               }
         }
+
+        classX.remove(meetingApplication);
+        meetingApplicationRepository.delete(meetingApplication);
+
         List<MeetingApplication> result = meetingApplicationRepository.findAll();
 
         return result;
@@ -107,19 +182,44 @@ public class MeetingApplicationService {
 
         SwimClass applicationClass = meetingApplication.getSwimClass();
 
+
         for (WaitingQueue waitingQueue : allWaitingQueues) {
 
             // main 참가자 먼저
             if (waitingQueue.getSwimClass().equals(applicationClass)) {
 
-                Integer waitingNumber = waitingQueue.getAvailableLastNumber() + 1;
-                // 신청서에 대기번호 초기화
-                meetingApplication.setWaitingNumber(waitingNumber);
-                meetingApplicationRepository.save(meetingApplication);
+                switch (applicationClass) {
+                    case HAIL:
+                        classA.add(meetingApplication);
+                        if (waitingQueue.getCapacity() >= classA.size()) {
+                            meetingApplication.setApproval(true);
+                        }
+                        break;
+                    case PADO:
+                        classB.add(meetingApplication);
+                        if (waitingQueue.getCapacity() >= classB.size()) {
+                            meetingApplication.setApproval(true);
+                        }
+                        break;
+                    case JANJAN:
+                        classC.add(meetingApplication);
+                        if (waitingQueue.getCapacity() >= classC.size()) {
+                            meetingApplication.setApproval(true);
+                        }
+                        break;
+                    case NULNUL:
+                        classD.add(meetingApplication);
+                        if (waitingQueue.getCapacity() >= classD.size()) {
+                            meetingApplication.setApproval(true);
+                        }
+                        break;
+                    default:
+                        break;
+                }
 
+                meetingApplicationRepository.save(meetingApplication);
                 // 해당 반의 신청인원 증가
                 waitingQueue.setApplicationCount(waitingQueue.getApplicationCount() + 1);
-                waitingQueue.setAvailableLastNumber(waitingNumber);
                 waitingQueueRepository.save(waitingQueue);
 
             }
@@ -139,5 +239,6 @@ public class MeetingApplicationService {
 
         }
     }
+
 
 }

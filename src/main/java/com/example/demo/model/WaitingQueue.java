@@ -11,16 +11,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.demo.enum_model.SwimClass;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -38,27 +34,35 @@ public class WaitingQueue {
 
     private SwimClass swimClass;
 
+    // 허용 가능 인원
     private Integer capacity;
 
+    // 추가 지원자 수
     private Integer extraCapacity;
 
+    //지원자 수
     private Integer applicationCount;
 
-    private Integer availableLastNumber;
 
     @PostConstruct
     public void init() {
         {
             applicationCount = 0;
-            availableLastNumber = 1;
         }
     }
 
     @CreatedDate
-    @Column(updatable = false, nullable = false)
+    @Column(updatable = false, nullable = true)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    @Builder
+    public WaitingQueue(SwimClass swimClass, Integer capacity, Integer extraCapacity, Integer applicationCount) {
+        this.swimClass = swimClass;
+        this.capacity = capacity;
+        this.extraCapacity = extraCapacity;
+        this.applicationCount = applicationCount;
+    }
 }

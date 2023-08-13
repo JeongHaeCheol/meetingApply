@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,9 +12,18 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import javax.annotation.PostConstruct;
+
 @Configuration
 @EnableSwagger2
+@Slf4j
 public class SwaggerConfig {
+
+
+    @PostConstruct
+    public void init() {
+        log.info("http://localhost:8089/swagger-ui.html#/meeting-application-controller");
+    }
     @Bean
     public Docket restAPI() {
         return new Docket(DocumentationType.SWAGGER_2)

@@ -3,12 +3,10 @@ package com.example.demo.controller;
 import java.util.Date;
 import java.util.List;
 
+import com.example.demo.controller.dto.ApplyDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.dto.ResponseDto;
 import com.example.demo.dto.WaitingInfoDto;
@@ -33,13 +31,31 @@ public class MeetingApplicationController {
         return ResponseEntity.ok("Home");
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity delete(@RequestParam Integer id, @RequestParam Integer participantId) {
+
+        List<MeetingApplication> result = meetingApplicationService.deleteWaiting(id, participantId);
+
+        return ResponseEntity.ok(result);
+    }
+
     // 정모신청
     @PostMapping("/apply")
-    public ResponseEntity apply(@ModelAttribute MeetingApplication payload) {
+    public ResponseEntity apply(@ModelAttribute ApplyDto payload) {
 
         List<MeetingApplication> result = meetingApplicationService.addWaiting(payload);
 
         return ResponseEntity.ok(result);
+    }
+
+    // 반별 신청 현황리스트
+    @GetMapping("/list")
+    public ResponseEntity list(@RequestParam SwimClass swimClass) {
+
+        List<MeetingApplication> result = meetingApplicationService.getMeetingApplicationList(swimClass);
+
+        return ResponseEntity.ok(result);
+
     }
 
     // 대기정보 확인

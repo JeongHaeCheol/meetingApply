@@ -14,16 +14,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.demo.enum_model.SwimClass;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -39,14 +35,16 @@ public class MeetingApplication {
     @Column
     private Integer id;
 
-    // 대기번호
-    private Integer waitingNumber;
 
     private SwimClass swimClass;
+
+    private Boolean approval;
 
     @OneToOne
     @JoinColumn(name = "participant_id")
     private Participant mainParticipant;
+
+    private String nickname;
 
     // @OneToOne
     // @JoinColumn(name = "extra_paid_lesson_id")
@@ -75,4 +73,16 @@ public class MeetingApplication {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @Builder
+    public MeetingApplication(SwimClass swimClass, Boolean approval, Participant mainParticipant, String nickname, Boolean isAfterMeeting, Boolean isAttendance, Boolean isPayment, String inquiry) {
+        this.swimClass = swimClass;
+        this.approval = approval;
+        this.mainParticipant = mainParticipant;
+        this.nickname = nickname;
+        this.isAfterMeeting = isAfterMeeting;
+        this.isAttendance = isAttendance;
+        this.isPayment = isPayment;
+        this.inquiry = inquiry;
+    }
 }
